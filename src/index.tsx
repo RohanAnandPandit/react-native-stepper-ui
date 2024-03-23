@@ -1,3 +1,6 @@
+/* eslint-disable prettier/prettier */
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable prettier/prettier */
 import React, { FC, useState, ReactElement, useEffect } from 'react';
 import {
   View,
@@ -16,7 +19,7 @@ export interface StepperProps {
   onFinish: Function;
   wrapperStyle?: ViewStyle;
   stepStyle?: ViewStyle;
-  stepLine?:ViewStyle;
+  stepLine?: ViewStyle;
   stepTextStyle?: TextStyle;
   buttonNextStyle?: ViewStyle;
   buttonBackStyle?: ViewStyle;
@@ -28,13 +31,9 @@ export interface StepperProps {
   finishButtonLabel?: string;
 }
 
-const search = (keyName: number, myArray: number[]): boolean => {
-  return myArray.some((val) => val === keyName);
-};
-
 const Stepper: FC<StepperProps> = (props) => {
   const {
-    active,
+    active: activeStep,
     content,
     onBack,
     onNext,
@@ -50,95 +49,33 @@ const Stepper: FC<StepperProps> = (props) => {
     showButton = true,
     nextButtonLabel,
     backButtonLabel,
-    finishButtonLabel
+    finishButtonLabel,
   } = props;
-  const [step, setStep] = useState<number[]>([0]);
+  const [steps, setSteps] = useState<number[]>([0]);
   const pushData = (val: number) => {
-    setStep((prev) => [...prev, val]);
+    setSteps((prev) => [...prev, val]);
   };
 
   const removeData = () => {
-    setStep((prev) => {
+    setSteps((prev) => {
       prev.pop();
       return prev;
     });
   };
 
   useEffect(() => {
-    if (step[step.length - 1] > active) {
+    if (steps[steps.length - 1] > activeStep) {
       removeData();
     } else {
-      pushData(active);
+      pushData(activeStep);
     }
-  }, [active]);
+  }, [activeStep, steps]);
 
   return (
     <View style={wrapperStyle}>
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        {content.map((_, i) => {
-          return (
-            <React.Fragment key={i}>
-              {i !== 0 && (
-                <View
-                  style={[{
-                    flex: 1,
-                    height: 1,
-                    backgroundColor: 'grey',
-                    opacity: 1,
-                    marginHorizontal: 10,
-                  },stepLine]}
-                />
-              )}
-              <View
-                style={[
-                  {
-                    backgroundColor: '#1976d2',
-                    width: 30,
-                    height: 30,
-                    borderRadius: 30,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    opacity: search(i, step) ? 1 : 0.3,
-                  },
-                  stepStyle,
-                ]}
-              >
-                {search(i, step) ? (
-                  <Text
-                    style={[
-                      {
-                        color: 'white',
-                      },
-                      stepTextStyle,
-                    ]}
-                  >
-                    &#10003;
-                  </Text>
-                ) : (
-                  <Text
-                    style={[
-                      {
-                        color: 'white',
-                      },
-                      stepTextStyle,
-                    ]}
-                  >
-                    {i + 1}
-                  </Text>
-                )}
-              </View>
-            </React.Fragment>
-          );
-        })}
-      </View>
+      <NumberLine {...{ content, stepLine, steps, stepStyle, stepTextStyle }} />
       <ScrollView showsVerticalScrollIndicator={false}>
-        {content[active]}
+        {content[activeStep]}
       </ScrollView>
       {showButton && (
         <View
@@ -146,68 +83,144 @@ const Stepper: FC<StepperProps> = (props) => {
             flexDirection: 'row',
           }}
         >
-          {active !== 0 && (
-            <TouchableOpacity
-              style={[
-                {
-                  padding: 10,
-                  borderRadius: 4,
-                  alignSelf: 'flex-start',
-                  marginRight: 10,
-                },
-                buttonBackStyle,
-                {
-                  backgroundColor: '#a1a1a1',
-                },
-              ]}
+          {activeStep !== 0 && (
+            <Button
+              style={[buttonBackStyle]}
               onPress={() => {
-                // removeData();
                 onBack();
               }}
-            >
-              <Text style={[{ color: 'white' }, buttonTextStyle]}>{ backButtonLabel }</Text>
-            </TouchableOpacity>
+              buttonTextStyle={buttonTextStyle}
+              label={backButtonLabel}
+            />
           )}
-          {content.length - 1 !== active && (
-            <TouchableOpacity
-              style={[
-                {
-                  padding: 10,
-                  borderRadius: 4,
-                  backgroundColor: '#1976d2',
-                  alignSelf: 'flex-start',
-                  marginRight: 10,
-                },
-                buttonNextStyle,
-              ]}
-              onPress={() => {
-                // pushData(active + 1);
-                onNext();
-              }}
-            >
-              <Text style={[{ color: 'white' }, buttonTextStyle]}>{ nextButtonLabel }</Text>
-            </TouchableOpacity>
+          {content.length - 1 !== activeStep && (
+            <Button
+              style={buttonNextStyle}
+              onClick={onNext}
+              textStyle={buttonTextStyle}
+              label={nextButtonLabel}
+            />
           )}
-          {content.length - 1 === active && (
-            <TouchableOpacity
-              style={[
-                {
-                  padding: 10,
-                  borderRadius: 4,
-                  backgroundColor: '#1976d2',
-                  alignSelf: 'flex-start',
-                },
-                buttonFinishStyle,
-              ]}
-              onPress={() => onFinish()}
-            >
-              <Text style={[{ color: 'white' }, buttonTextStyle]}>{ finishButtonLabel }</Text>
-            </TouchableOpacity>
+          {content.length - 1 === activeStep && (
+            <Button
+              style={buttonFinishStyle}
+              onPress={onFinish}
+              textStyle={buttonTextStyle}
+              label={finishButtonLabel}
+            />
           )}
         </View>
       )}
     </View>
   );
 };
+
+type NumberLineProps = {
+  content: React.ReactElement<any, string | React.JSXElementConstructor<any>>[];
+  stepLine: ViewStyle | undefined;
+  steps: number[];
+  stepStyle: ViewStyle | undefined;
+  stepTextStyle: TextStyle | undefined;
+};
+function NumberLine({
+  content,
+  stepLine,
+  steps,
+  stepStyle,
+  stepTextStyle,
+}: NumberLineProps) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      {content.map((_, i) => {
+        return (
+          <React.Fragment key={i}>
+            {i !== 0 && (
+              <View
+                style={[
+                  {
+                    flex: 1,
+                    height: 1,
+                    backgroundColor: 'grey',
+                    opacity: 1,
+                    marginHorizontal: 10,
+                  },
+                  stepLine,
+                ]}
+              />
+            )}
+            <View
+              style={[
+                {
+                  backgroundColor: '#1976d2',
+                  width: 30,
+                  height: 30,
+                  borderRadius: 30,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  opacity: containsKey(i, steps) ? 1 : 0.3,
+                },
+                stepStyle,
+              ]}
+            >
+              {containsKey(i, steps) ? (
+                <Text
+                  style={[
+                    {
+                      color: 'white',
+                    },
+                    stepTextStyle,
+                  ]}
+                >
+                  &#10003;
+                </Text>
+              ) : (
+                <Text
+                  style={[
+                    {
+                      color: 'white',
+                    },
+                    stepTextStyle,
+                  ]}
+                >
+                  {i + 1}
+                </Text>
+              )}
+            </View>
+          </React.Fragment>
+        );
+      })}
+    </View>
+  );
+}
+
+function Button({ style, onPress, textStyle, label }: any) {
+  return (
+    <TouchableOpacity
+      style={[
+        {
+          padding: 10,
+          borderRadius: 4,
+          backgroundColor: '#1976d2',
+          alignSelf: 'flex-start',
+          marginRight: 10,
+        },
+        style,
+      ]}
+      onPress={onPress}
+    >
+      <Text style={[{ color: 'white' }, textStyle]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function containsKey(keyName: number, myArray: number[]): boolean {
+  return myArray.includes(keyName);
+}
 
 export default Stepper;
